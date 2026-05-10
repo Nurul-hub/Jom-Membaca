@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #5C94FC; /* Langit Mario */
+            background-color: #5C94FC; /* Warna langit Mario */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -30,73 +30,94 @@
             border-radius: 20px;
             border: 5px solid var(--mario-red);
             text-align: center;
-            box-shadow: 0 10px 0 #222;
+            box-shadow: 0 10px 0 #000;
         }
 
         .avatar {
             width: 100px;
             height: 100px;
-            background: url('https://img.icons8.com/color/144/mario.png') no-repeat center;
-            background-size: contain;
-            margin: 0 auto 10px;
+            margin-bottom: 10px;
         }
 
-        h1 { color: var(--mario-red); text-shadow: 2px 2px var(--mario-yellow); }
-
-        #sentence-box {
+        #text-display {
             font-size: 24px;
             font-weight: bold;
             margin: 20px 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border: 3px dashed var(--mario-blue);
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
             min-height: 60px;
         }
 
-        .btn {
-            padding: 12px 25px;
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
             font-size: 16px;
             cursor: pointer;
             border: none;
             border-radius: 10px;
-            margin: 5px;
             font-weight: bold;
-            transition: 0.2s;
+            transition: transform 0.1s;
         }
+
+        button:active { transform: scale(0.95); }
 
         .btn-listen { background: var(--mario-blue); color: white; }
         .btn-record { background: var(--mario-red); color: white; }
-        .btn-back { background: #666; color: white; }
+        .btn-nav { background: var(--mario-yellow); color: black; }
 
-        #feedback {
-            font-size: 40px;
-            height: 50px;
-            margin: 10px;
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+            height: 20px;
         }
 
-        #score { font-size: 20px; color: var(--mario-red); font-weight: bold; }
+        .star {
+            font-size: 50px;
+            display: none;
+            color: var(--mario-yellow);
+            animation: bounce 0.5s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-20px); }
+        }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div class="avatar"></div>
-    <h1>Jom Membaca Keluarga Hana</h1>
+    <img src="https://img.icons8.com/color/144/super-mario.png" alt="Mario" class="avatar">
+    <h2 style="color: var(--mario-red);">Jom Membaca Keluarga Hana</h2>
     
-    <div id="score">Markah: 0</div>
-    <div id="sentence-box">Sila tekan butang mula</div>
-    <div id="feedback"></div>
+    <div id="star-display" class="star">⭐</div>
+    
+    <div id="text-display">Memuatkan ayat...</div>
+    
+    <div id="status">Sila tekan butang 'Dengar Suara'</div>
 
-    <div id="controls">
-        <button class="btn btn-listen" onclick="playAudio()">🔊 Dengar Cara Baca</button>
-        <button class="btn btn-record" id="record-btn" onclick="startRecording()">🎤 Rekod Suara</button>
-        <br>
-        <button class="btn btn-back" onclick="resetGame()">🔄 Kembali / Mula Semula</button>
+    <div class="button-group">
+        <button class="btn-listen" onclick="playText()">🔊 Dengar Suara</button>
+        <button class="btn-record" id="recordBtn" onclick="startRecording()">🎤 Rekod Suara</button>
     </div>
+
+    <div class="button-group" style="margin-top: 20px;">
+        <button class="btn-nav" onclick="prevStep()">⬅️ Kembali</button>
+        <button class="btn-nav" onclick="nextStep()">Seterusnya ➡️</button>
+    </div>
+    
+    <p style="margin-top: 15px; font-size: 14px;">Markah: <span id="score">0</span></p>
 </div>
 
 <script>
-    const sentences = [
+    const ayatList = [
         "Ini Hana.",
         "Adik Hana masih kecil.",
         "Umurnya empat tahun.",
@@ -109,87 +130,100 @@
         "Kini Hana tahu keluarganya menyayanginya. Hana berasa gembira."
     ];
 
-    let currentIndex = 0;
-    let markah = 0;
+    let currentStep = 0;
+    let score = 0;
 
-    const sentenceDisplay = document.getElementById('sentence-box');
-    const feedbackDisplay = document.getElementById('feedback');
+    const textDisplay = document.getElementById('text-display');
+    const statusDisplay = document.getElementById('status');
     const scoreDisplay = document.getElementById('score');
+    const starDisplay = document.getElementById('star-display');
 
-    // Mula permainan
-    sentenceDisplay.innerText = sentences[currentIndex];
+    // Inisialisasi ayat pertama
+    updateUI();
 
-    // Fungsi 1: Dengar Suara (Text-to-Speech)
-    function playAudio() {
+    function updateUI() {
+        textDisplay.innerText = ayatList[currentStep];
+        statusDisplay.innerText = "Sedia untuk membaca?";
+        statusDisplay.style.color = "black";
+        starDisplay.style.display = "none";
+    }
+
+    // 1. Fungsi Dengar Suara (Text-to-Speech)
+    function playText() {
         const msg = new SpeechSynthesisUtterance();
-        msg.text = sentences[currentIndex];
-        msg.lang = 'ms-MY'; // Bahasa Melayu
+        msg.text = ayatList[currentStep];
+        msg.lang = 'ms-MY';
         window.speechSynthesis.speak(msg);
     }
 
-    // Fungsi 2: Rekod & Semak Suara (Speech Recognition)
+    // 2. Fungsi Rakaman & Semakan (Speech Recognition)
     function startRecording() {
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'ms-MY';
         
-        const recordBtn = document.getElementById('record-btn');
-        recordBtn.innerText = "Mendengar...";
-        recordBtn.style.background = "orange";
-
-        recognition.start();
+        statusDisplay.innerText = "Sila baca sekarang...";
+        document.getElementById('recordBtn').style.opacity = "0.5";
 
         recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript.toLowerCase().replace(/[.,]/g, "");
-            const target = sentences[currentIndex].toLowerCase().replace(/[.,]/g, "");
+            const result = event.results[0][0].transcript.toLowerCase().replace(/[.,]/g, "");
+            const target = ayatList[currentStep].toLowerCase().replace(/[.,]/g, "");
 
-            if (transcript.includes(target) || target.includes(transcript)) {
-                betul();
+            if (result.includes(target) || target.includes(result)) {
+                handleSuccess();
             } else {
-                salah();
+                handleFailure();
             }
         };
 
         recognition.onspeechend = () => {
             recognition.stop();
-            recordBtn.innerText = "🎤 Rekod Suara";
-            recordBtn.style.background = "#E52521";
+            document.getElementById('recordBtn').style.opacity = "1";
         };
+
+        recognition.onerror = () => {
+            statusDisplay.innerText = "Ralat dikesan. Cuba lagi.";
+            document.getElementById('recordBtn').style.opacity = "1";
+        };
+
+        recognition.start();
     }
 
-    function betul() {
-        feedbackDisplay.innerText = "⭐ TAHNIAH! ⭐";
-        const audio = new SpeechSynthesisUtterance("TAHNIAH");
-        audio.lang = 'ms-MY';
-        window.speechSynthesis.speak(audio);
+    function handleSuccess() {
+        statusDisplay.innerText = "TAHNIAH! BETUL!";
+        statusDisplay.style.color = "green";
+        starDisplay.style.display = "block";
+        score += 10;
+        scoreDisplay.innerText = score;
 
-        markah += 10;
-        scoreDisplay.innerText = "Markah: " + markah;
-
-        setTimeout(() => {
-            currentIndex++;
-            if (currentIndex < sentences.length) {
-                sentenceDisplay.innerText = sentences[currentIndex];
-                feedbackDisplay.innerText = "";
-            } else {
-                sentenceDisplay.innerText = "Hebat! Anda telah tamat membaca.";
-                feedbackDisplay.innerText = "🏆";
-            }
-        }, 2000);
+        // Suara Tahniah
+        const congrats = new SpeechSynthesisUtterance("Tahniah! Anda hebat.");
+        congrats.lang = 'ms-MY';
+        window.speechSynthesis.speak(congrats);
     }
 
-    function salah() {
-        feedbackDisplay.innerText = "❌ Cuba Lagi";
-        const audio = new SpeechSynthesisUtterance("Sila ulang semula");
-        audio.lang = 'ms-MY';
-        window.speechSynthesis.speak(audio);
+    function handleFailure() {
+        statusDisplay.innerText = "Salah tu, sila cuba lagi.";
+        statusDisplay.style.color = "red";
+        
+        const tryAgain = new SpeechSynthesisUtterance("Sila ulang semula.");
+        tryAgain.lang = 'ms-MY';
+        window.speechSynthesis.speak(tryAgain);
     }
 
-    function resetGame() {
-        currentIndex = 0;
-        markah = 0;
-        scoreDisplay.innerText = "Markah: 0";
-        sentenceDisplay.innerText = sentences[currentIndex];
-        feedbackDisplay.innerText = "";
+    function nextStep() {
+        if (currentStep < ayatList.length - 1) {
+            currentStep++;
+            updateUI();
+        } else {
+            alert("Syabas! Anda telah tamat membaca semua ayat!");
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 0) {
+            currentStep--;
+            updateUI();
+        }
     }
 </script>
 
