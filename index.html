@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jom Membaca Keluarga Hana</title>
+    <style>
+        :root {
+            --mario-red: #E52521;
+            --mario-blue: #049CD8;
+            --mario-yellow: #FBD000;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #5C94FC; /* Langit Mario */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        #game-container {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 20px;
+            border: 5px solid var(--mario-red);
+            text-align: center;
+            box-shadow: 0 10px 0 #222;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            background: url('https://img.icons8.com/color/144/mario.png') no-repeat center;
+            background-size: contain;
+            margin: 0 auto 10px;
+        }
+
+        h1 { color: var(--mario-red); text-shadow: 2px 2px var(--mario-yellow); }
+
+        #sentence-box {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 3px dashed var(--mario-blue);
+            min-height: 60px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            margin: 5px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-listen { background: var(--mario-blue); color: white; }
+        .btn-record { background: var(--mario-red); color: white; }
+        .btn-back { background: #666; color: white; }
+
+        #feedback {
+            font-size: 40px;
+            height: 50px;
+            margin: 10px;
+        }
+
+        #score { font-size: 20px; color: var(--mario-red); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="avatar"></div>
+    <h1>Jom Membaca Keluarga Hana</h1>
+    
+    <div id="score">Markah: 0</div>
+    <div id="sentence-box">Sila tekan butang mula</div>
+    <div id="feedback"></div>
+
+    <div id="controls">
+        <button class="btn btn-listen" onclick="playAudio()">🔊 Dengar Cara Baca</button>
+        <button class="btn btn-record" id="record-btn" onclick="startRecording()">🎤 Rekod Suara</button>
+        <br>
+        <button class="btn btn-back" onclick="resetGame()">🔄 Kembali / Mula Semula</button>
+    </div>
+</div>
+
+<script>
+    const sentences = [
+        "Ini Hana.",
+        "Adik Hana masih kecil.",
+        "Umurnya empat tahun.",
+        "Ibu dan ayah selalu menjaga adik.",
+        "Ayah selalu membaca buku cerita bersama adik.",
+        "Abang juga suka menyanyi dengan adik.",
+        "Hana melihat mereka dari jauh.",
+        "Hana duduk diam di sudut bilik.",
+        "Hana berasa sedih.",
+        "Kini Hana tahu keluarganya menyayanginya. Hana berasa gembira."
+    ];
+
+    let currentIndex = 0;
+    let markah = 0;
+
+    const sentenceDisplay = document.getElementById('sentence-box');
+    const feedbackDisplay = document.getElementById('feedback');
+    const scoreDisplay = document.getElementById('score');
+
+    // Mula permainan
+    sentenceDisplay.innerText = sentences[currentIndex];
+
+    // Fungsi 1: Dengar Suara (Text-to-Speech)
+    function playAudio() {
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = sentences[currentIndex];
+        msg.lang = 'ms-MY'; // Bahasa Melayu
+        window.speechSynthesis.speak(msg);
+    }
+
+    // Fungsi 2: Rekod & Semak Suara (Speech Recognition)
+    function startRecording() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'ms-MY';
+        
+        const recordBtn = document.getElementById('record-btn');
+        recordBtn.innerText = "Mendengar...";
+        recordBtn.style.background = "orange";
+
+        recognition.start();
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript.toLowerCase().replace(/[.,]/g, "");
+            const target = sentences[currentIndex].toLowerCase().replace(/[.,]/g, "");
+
+            if (transcript.includes(target) || target.includes(transcript)) {
+                betul();
+            } else {
+                salah();
+            }
+        };
+
+        recognition.onspeechend = () => {
+            recognition.stop();
+            recordBtn.innerText = "🎤 Rekod Suara";
+            recordBtn.style.background = "#E52521";
+        };
+    }
+
+    function betul() {
+        feedbackDisplay.innerText = "⭐ TAHNIAH! ⭐";
+        const audio = new SpeechSynthesisUtterance("TAHNIAH");
+        audio.lang = 'ms-MY';
+        window.speechSynthesis.speak(audio);
+
+        markah += 10;
+        scoreDisplay.innerText = "Markah: " + markah;
+
+        setTimeout(() => {
+            currentIndex++;
+            if (currentIndex < sentences.length) {
+                sentenceDisplay.innerText = sentences[currentIndex];
+                feedbackDisplay.innerText = "";
+            } else {
+                sentenceDisplay.innerText = "Hebat! Anda telah tamat membaca.";
+                feedbackDisplay.innerText = "🏆";
+            }
+        }, 2000);
+    }
+
+    function salah() {
+        feedbackDisplay.innerText = "❌ Cuba Lagi";
+        const audio = new SpeechSynthesisUtterance("Sila ulang semula");
+        audio.lang = 'ms-MY';
+        window.speechSynthesis.speak(audio);
+    }
+
+    function resetGame() {
+        currentIndex = 0;
+        markah = 0;
+        scoreDisplay.innerText = "Markah: 0";
+        sentenceDisplay.innerText = sentences[currentIndex];
+        feedbackDisplay.innerText = "";
+    }
+</script>
+
+</body>
+</html>
